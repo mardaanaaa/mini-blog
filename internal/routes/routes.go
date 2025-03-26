@@ -22,8 +22,8 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	students := r.Group("api/v1/students")
 	{
 		students.GET("/", studentHandler.GetAllStudents)
-		students.GET("/:id", studentHandler.GetStudent)
 		students.POST("/", studentHandler.CreateStudent)
+		students.GET("/:id", studentHandler.GetStudent)
 		students.PUT("/:id", studentHandler.UpdateStudent)
 		students.DELETE("/:id", studentHandler.DeleteStudent)
 	}
