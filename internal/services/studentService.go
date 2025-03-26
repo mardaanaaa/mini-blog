@@ -1,13 +1,11 @@
 package services
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"errors"
 	"rest-project/internal/models"
-	"strconv"
 )
+
+type StudentService struct{}
 
 var (
 	id       = 4
@@ -18,121 +16,61 @@ var (
 	}
 )
 
-func GetAllStudents(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	err := json.NewEncoder(w).Encode(students)
-	if err != nil {
-		log.Fatal(err)
-	}
+// 📌 Получить список всех студентов
+func (s *StudentService) GetAllStudents() []models.Student {
+	return students
 }
 
-func GetStudentById(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
+// 📌 Получить студента по ID
+func (s *StudentService) GetStudentById(id int) (models.Student, error) {
 	for _, student := range students {
 		if student.Id == id {
-			err := json.NewEncoder(w).Encode(student)
-			if err != nil {
-				log.Fatal(err)
-			}
-			break
+			return student, nil
 		}
 	}
+	return models.Student{}, errors.New("student not found")
 }
 
-func CreateStudent(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var studentCreate models.StudentEdit
-
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = json.Unmarshal(body, &studentCreate)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+// 📌 Создать нового студента
+func (s *StudentService) CreateStudent(studentEdit models.StudentEdit) models.Student {
 	newStudent := models.Student{
 		Id:        id,
-		FullName:  studentCreate.FullName,
-		Birthdate: studentCreate.Birthdate,
-		Age:       studentCreate.Age,
-	}
-
-	id += 1
-
-	students = append(students, newStudent)
-
-	err = json.NewEncoder(w).Encode(newStudent)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func UpdateStudent(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var studentEdit models.StudentEdit
-	studentId, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = json.Unmarshal(body, &studentEdit)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	updatedStudent := models.Student{
 		FullName:  studentEdit.FullName,
 		Birthdate: studentEdit.Birthdate,
 		Age:       studentEdit.Age,
 	}
 
-	for i, student := range students {
-		if student.Id == studentId {
+	id++
+	students = append(students, newStudent)
 
-			updatedStudent.Id = student.Id
-			students = append(students[:i], students[i+1:]...)
-			students = append(students, updatedStudent)
-			break
-		}
-	}
-
-	err = json.NewEncoder(w).Encode(students)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return newStudent
 }
 
-func DeleteStudent(writer http.ResponseWriter, request *http.Request) {
-	studentId, err := strconv.Atoi(request.URL.Query().Get("id"))
-	if err != nil {
-		log.Fatal(err)
-	}
+// 📌 Обновить данные студента
+func (s *StudentService) UpdateStudent(studentId int, studentEdit models.StudentEdit) (models.Student, error) {
+	for i, student := range students {
+		if student.Id == studentId {
+			updatedStudent := models.Student{
+				Id:        student.Id,
+				FullName:  studentEdit.FullName,
+				Birthdate: studentEdit.Birthdate,
+				Age:       studentEdit.Age,
+			}
 
+			students[i] = updatedStudent
+			return updatedStudent, nil
+		}
+	}
+	return models.Student{}, errors.New("student not found")
+}
+
+// 📌 Удалить студента
+func (s *StudentService) DeleteStudent(studentId int) error {
 	for i, student := range students {
 		if student.Id == studentId {
 			students = append(students[:i], students[i+1:]...)
-			break
+			return nil
 		}
 	}
-	
-	err = json.NewEncoder(writer).Encode(students)
-	if err != nil {
-		log.Fatal(err)
-	}
+	return errors.New("student not found")
 }

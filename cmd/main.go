@@ -1,21 +1,14 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"rest-project/internal/controllers"
+	"github.com/gin-gonic/gin"
+	"rest-project/internal/routes"
 )
 
 func main() {
-	controllers.New()
+	r := gin.Default()
 
-	server := &http.Server{
-		Addr: "localhost:8080",
-	}
+	routes.SetupRoutes(r)
 
-	err := server.ListenAndServe()
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	r.Run(":8080")
 }
