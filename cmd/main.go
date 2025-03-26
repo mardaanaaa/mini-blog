@@ -1,21 +1,26 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
-	"net/http"
-	"rest-project/internal/controllers"
+	"rest-project/internal/models"
+	"rest-project/internal/routes"
 )
 
 func main() {
-	controllers.New()
-
-	server := &http.Server{
-		Addr: "localhost:8080",
-	}
-
-	err := server.ListenAndServe()
-
+	db, err := gorm.Open(postgres.Open("postgres://myuser:mypassword@localhost:5444/mydatabase?sslmode=disable"), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error connecting to the database:", err)
 	}
+
+	err = db.AutoMigrate(&models.Student{})
+	if err != nil {
+		log.Fatal("Error on migrating to the DB", err)
+	}
+
+	r := gin.Default()
+	routes.SetupRoutes(r, db)
+	r.Run(":8080")
 }
