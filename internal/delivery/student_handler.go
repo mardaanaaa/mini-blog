@@ -8,13 +8,18 @@ import (
 	"strconv"
 )
 
+// Конструктор
+func NewStudentHandler(service *service.StudentService) *StudentHandler {
+	return &StudentHandler{service: service}
+}
+
 type StudentHandler struct {
-	service *services.StudentService
+	service *service.StudentService
 }
 
 // Получение списка всех студентов
 func (h *StudentHandler) GetAllStudents(c *gin.Context) {
-	students := h.service.GetAllStudents()
+	students, _ := h.service.GetAllStudents()
 	c.JSON(http.StatusOK, students)
 }
 
@@ -26,7 +31,7 @@ func (h *StudentHandler) GetStudent(c *gin.Context) {
 		return
 	}
 
-	student, err := h.service.GetStudentById(id)
+	student, err := h.service.GetStudentByID(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Student not found"})
 		return
@@ -44,7 +49,12 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 		return
 	}
 
-	newStudent := h.service.CreateStudent(studentCreate)
+	newStudent, err := h.service.Create(studentCreate.FullName, studentCreate.Birthdate, studentCreate.Age)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post"})
+		return
+	}
+
 	c.JSON(http.StatusCreated, newStudent)
 }
 
@@ -62,7 +72,8 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 		return
 	}
 
-	updatedStudent, err := h.service.UpdateStudent(id, studentEdit)
+	// Передаем указатель на `studentEdit`
+	updatedStudent, err := h.service.Update(id, &studentEdit)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Student not found"})
 		return
