@@ -5,6 +5,17 @@ tags:
   - rest
 ---
 
+upd all dependencies:
+
+go mod init rest-project
+go get github.com/gin-gonic/gin
+go get gorm.io/gorm
+go get gorm.io/driver/postgres
+go get github.com/golang-jwt/jwt/v5
+go get github.com/golang-migrate/migrate/v4
+go get github.com/golang-migrate/migrate/v4/database/postgres
+go get github.com/golang-migrate/migrate/v4/source/file
+
 # REST API
 
 REST API (**Representational State Transfer API**) — это **архитектурный стиль** взаимодействия клиента и сервера через
