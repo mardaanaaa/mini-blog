@@ -9,10 +9,10 @@ import (
 func SetupRoutes(r *gin.Engine) {
 
 	// Роуты
-	students := r.Group("api/v1/auth")
+	authRoutes := r.Group("api/v1/auth")
 	{
-		students.POST("/login", auth.Login)
-		students.POST("/register", auth.Register)
+		authRoutes.POST("/login", auth.Login)
+		authRoutes.POST("/register", auth.Register)
 	}
 
 	protected := r.Group("api/v1")
