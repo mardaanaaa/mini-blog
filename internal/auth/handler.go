@@ -5,34 +5,45 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"rest-project/internal/db"
-	user "rest-project/internal/models"
+	"rest-project/internal/models" // Убедитесь, что модель User импортирована
 )
 
+// Login обработчик для логина
 func Login(c *gin.Context) {
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	var u user.User
-	db.DB.Where("username = ? ", req.Username).First(&u)
+	var u models.User // Используем структуру User
+	// Ищем пользователя в базе данных
+	db.DB.Where("username = ?", req.Username).First(&u)
 	if u.ID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
+	// Сравниваем хеш пароля
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "login or password incorrect"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Login or password incorrect"})
 		return
 	}
 
-	token, _ := GenerateJWT(u.ID)
+	// Генерация JWT токена
+	token, err := GenerateJWT(u.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
+
+// Register обработчик для регистрации нового пользователя
 func Register(c *gin.Context) {
 	var req struct {
 		Username string `json:"username"`
@@ -44,22 +55,22 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Check if user already exists
-	var existing user.User
+	// Проверка, существует ли уже пользователь с таким именем
+	var existing models.User
 	if err := db.DB.Where("username = ?", req.Username).First(&existing).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Username already taken"})
 		return
 	}
 
-	// Hash password
+	// Хеширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	// Create new user
-	u := user.User{
+	// Создание нового пользователя
+	u := models.User{
 		Username: req.Username,
 		Password: string(hashedPassword),
 	}
@@ -69,23 +80,4 @@ func Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
-}
-
-func Me(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found in context"})
-		return
-	}
-
-	var u user.User
-	if err := db.DB.First(&u, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"id":       u.ID,
-		"username": u.Username,
-	})
 }

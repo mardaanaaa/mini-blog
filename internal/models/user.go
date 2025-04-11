@@ -1,7 +1,8 @@
 package models
 
+// User модель для хранения данных пользователя
 type User struct {
-	ID       uint   `gorm:"primaryKey"`
-	Username string `gorm:"unique;not null"`
-	Password string `gorm:"not null"`
+	ID       uint   `json:"id" gorm:"primaryKey"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }

@@ -7,9 +7,13 @@ import (
 )
 
 func main() {
-	db.InitDB()
+	// Инициализация базы данных
+	db.ConnectDatabase()
 
+	// Инициализация маршрутов
 	r := gin.Default()
-	routes.SetupRoutes(r)
+	routes.InitRoutes(r)
+
+	// Запуск сервера
 	r.Run(":8080")
 }
