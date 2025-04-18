@@ -27,7 +27,7 @@ func (h *PostHandler) GetAllPosts(c *gin.Context) {
 
 func (h *PostHandler) GetPostByID(c *gin.Context) {
 	id := c.Param("id")
-	postID, err := strconv.Atoi(id) // Преобразуем строку в целое число
+	postID, err := strconv.Atoi(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
 		return
@@ -62,4 +62,22 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Post created successfully", "post": post})
+}
+
+// ✅ Новый метод удаления поста
+func (h *PostHandler) DeletePost(c *gin.Context) {
+	id := c.Param("id")
+	postID, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	err = h.Service.DeletePost(uint(postID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
 }
